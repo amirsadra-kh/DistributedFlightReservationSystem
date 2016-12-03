@@ -3,15 +3,15 @@ module shared {
     interface FSInterface {
 
         long bookFlight(in string firsName, in string lastName, in string address,
-                              in string phone, in string destination, in string date, in long flightClass);
+                              in string phone, in string destination, in string date, in string flightClass);
 
         string getBookedFlightCount();
 
         long editRecord(in string recordId, in string fieldName, in string newValue);
 
-        long addFlight(in string destination, in string date, in long ec, in long bus, in long fir);
+        long addFlight(in string destination, in string date, in string ec, in string bus, in string fir);
 
-        long removeFlight(in long recordId);
+        long removeFlight(in string recordId);
 
         long transferReservation(in string clientId, in string currentCity, in string otherCity);
 
