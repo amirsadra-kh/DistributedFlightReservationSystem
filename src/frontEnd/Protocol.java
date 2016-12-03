@@ -13,6 +13,18 @@ public class Protocol {
 
     public static byte[] createFrontEndMsg(int method , String... payloads) {
 
+        String msg = createLogMsg(method , payloads);
+
+        return msg.toString().getBytes();
+    }
+
+    public static byte[] createSequencerMsg(long seq, String frontEndMsg) {
+        String msg = seq + "," + frontEndMsg;
+        return msg.getBytes();
+    }
+
+    public static String createLogMsg(int method , String... payloads) {
+
         StringBuilder msg = new StringBuilder();
         msg.append(method + ",");
 
@@ -22,11 +34,7 @@ public class Protocol {
 
         msg.deleteCharAt(msg.length()-1);
 
-        return msg.toString().getBytes();
-    }
+        return msg.toString();
 
-    public static byte[] createSequencerMsg(long seq, String frontEndMsg) {
-        String msg = seq + "," + frontEndMsg;
-        return msg.getBytes();
     }
 }
