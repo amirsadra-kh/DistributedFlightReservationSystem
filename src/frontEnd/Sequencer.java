@@ -5,7 +5,8 @@ import net.rudp.ReliableSocket;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 
 /**
  * Created by masseeh on 12/2/16.
@@ -23,9 +24,9 @@ public class Sequencer {
 
                 System.out.println("Waiting...");
                 ReliableSocket socket = (ReliableSocket)sequencerSocket.accept();
-                sequenceNumber++;
-                System.out.println(sequenceNumber + " Connected...");
                 new Thread(new Handler(socket,sequenceNumber)).start();
+                System.out.println(sequenceNumber + " Connected...");
+                sequenceNumber++;
 
             }
         } catch (IOException e) {
@@ -64,11 +65,18 @@ public class Sequencer {
 
                 byte[] sendBuffer = Protocol.createSequencerMsg(seq, msg);
 
-
-
-
                 in.close();
                 socket.close();
+
+                ReliableSocket sendToReplica = new ReliableSocket();
+                sendToReplica.connect(new InetSocketAddress("127.0.0.1" , 9987));
+
+                OutputStream out = sendToReplica.getOutputStream();
+                out.write(sendBuffer);
+
+                out.flush();
+                out.close();
+                sendToReplica.close();
 
             } catch (IOException e) {
                 e.printStackTrace();

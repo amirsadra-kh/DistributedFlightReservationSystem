@@ -10,6 +10,7 @@ public class Protocol {
     public static final int ADD_FLIGHT = 3;
     public static final int REMOVE_FLIGHT = 4;
     public static final int TRANSFER_RESERVATION = 5;
+    public static final int MSG_LENGTH = 1024;
 
     public static byte[] createFrontEndMsg(int method , String... payloads) {
 
@@ -35,6 +36,14 @@ public class Protocol {
         msg.deleteCharAt(msg.length()-1);
 
         return msg.toString();
+
+    }
+
+    public static byte[] createResultMsg(int method, String seq, String result) {
+
+        String msg = method + "," + seq + "," + result;
+
+        return msg.getBytes();
 
     }
 }

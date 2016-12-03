@@ -1,5 +1,6 @@
 package frontEnd;
 
+import net.rudp.ReliableServerSocket;
 import net.rudp.ReliableSocket;
 import org.omg.CORBA.ORB;
 import org.omg.CosNaming.NameComponent;
@@ -186,5 +187,30 @@ public class CorbaFrontEnd extends FSInterfacePOA {
             e.printStackTrace(System.out);
         }
 
+    }
+
+    public void listen() {
+
+        try {
+            ReliableServerSocket serverSocket = new ReliableServerSocket(9999);
+
+            while (true) {
+                ReliableSocket socket = (ReliableSocket)serverSocket.accept();
+
+                new Thread(new Handler()).start();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+    class Handler implements Runnable {
+        @Override
+        public void run() {
+
+        }
     }
 }
