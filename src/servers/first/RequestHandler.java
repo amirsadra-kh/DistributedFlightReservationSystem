@@ -51,7 +51,7 @@ public class RequestHandler {
 
         String[] tokenizer = msg.split(",");
 
-        String seq = tokenizer[0];
+        String seq = tokenizer[2];
 
         byte[] returnResult;
         String res = "";
@@ -60,7 +60,7 @@ public class RequestHandler {
 
         switch (method) {
             case Protocol.BOOK_FLIGHT :
-                res = servant.bookFlight(tokenizer[2], tokenizer[3], tokenizer[4], tokenizer[5], tokenizer[6], tokenizer[7], tokenizer[8]) + "";
+                res = servant.bookFlight(tokenizer[3], tokenizer[4], tokenizer[5], tokenizer[6], tokenizer[7], tokenizer[8], tokenizer[9]) + "";
 
                 break;
             case Protocol.GET_BOOKED_FLIGHT_COUNT :
@@ -68,19 +68,19 @@ public class RequestHandler {
 
                 break;
             case Protocol.EDIT_RECORD :
-                res = servant.editRecord(tokenizer[2], tokenizer[3], tokenizer[4]) + "";
+                res = servant.editRecord(tokenizer[3], tokenizer[4], tokenizer[5]) + "";
 
                 break;
             case Protocol.ADD_FLIGHT :
-                res = servant.addFlight(tokenizer[2], tokenizer[3], tokenizer[4], tokenizer[5], tokenizer[6]) + "";
+                res = servant.addFlight(tokenizer[3], tokenizer[4], tokenizer[5], tokenizer[6], tokenizer[7]) + "";
 
                 break;
             case Protocol.REMOVE_FLIGHT :
-                res = servant.removeFlight(tokenizer[2]) + "";
+                res = servant.removeFlight(tokenizer[3]) + "";
 
                 break;
             case Protocol.TRANSFER_RESERVATION :
-                res = servant.transferReservation(tokenizer[2], tokenizer[3], tokenizer[4]) + "";
+                res = servant.transferReservation(tokenizer[3], tokenizer[4], tokenizer[5]) + "";
 
                 break;
         }

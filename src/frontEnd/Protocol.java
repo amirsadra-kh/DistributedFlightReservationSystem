@@ -10,11 +10,13 @@ public class Protocol {
     public static final int ADD_FLIGHT = 3;
     public static final int REMOVE_FLIGHT = 4;
     public static final int TRANSFER_RESERVATION = 5;
+
     public static final int MSG_LENGTH = 1024;
+    public static final int TIME_OUT = 6000;
 
-    public static byte[] createFrontEndMsg(int method , String... payloads) {
+    public static byte[] createFrontEndMsg(int method, int clientId , String... payloads) {
 
-        String msg = createLogMsg(method , payloads);
+        String msg = createLogMsg(method, clientId, payloads);
 
         return msg.toString().getBytes();
     }
@@ -24,10 +26,10 @@ public class Protocol {
         return msg.getBytes();
     }
 
-    public static String createLogMsg(int method , String... payloads) {
+    public static String createLogMsg(int method, int clientId , String... payloads) {
 
         StringBuilder msg = new StringBuilder();
-        msg.append(method + ",");
+        msg.append(method + "," + clientId + ",");
 
         for(String payload : payloads) {
             msg.append(payload + ",");

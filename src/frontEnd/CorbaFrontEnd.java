@@ -12,23 +12,42 @@ import shared.FSInterfaceHelper;
 import shared.FSInterfacePOA;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by masseeh on 12/2/16.
  */
 public class CorbaFrontEnd extends FSInterfacePOA {
 
+    private ConcurrentHashMap<Integer,Pair> holdBack = new ConcurrentHashMap<>();
+    private Object lock = new Object();
+    private Integer clientId = 0;
+
 
     @Override
     public int bookFlight(String firsName, String lastName, String address, String phone, String destination, String date, String flightClass) {
         try {
+
             ReliableSocket socket = establish();
 
             OutputStream out = socket.getOutputStream();
 
-            byte[] buffer = Protocol.createFrontEndMsg(Protocol.BOOK_FLIGHT, firsName, lastName, address, phone, destination, date, flightClass);
+            byte[] buffer;
+
+            int localId = 0;
+
+            synchronized (clientId) {
+                localId = clientId;
+                Pair pair = new Pair(localId);
+                holdBack.put(Protocol.BOOK_FLIGHT, pair);
+                buffer = Protocol.createFrontEndMsg(Protocol.BOOK_FLIGHT, clientId, firsName, lastName, address, phone, destination, date, flightClass);
+                clientId++;
+            }
+
 
             out.write(buffer);
             out.flush();
@@ -50,7 +69,17 @@ public class CorbaFrontEnd extends FSInterfacePOA {
 
             OutputStream out = socket.getOutputStream();
 
-            byte[] buffer = Protocol.createFrontEndMsg(Protocol.GET_BOOKED_FLIGHT_COUNT);
+            byte[] buffer;
+
+            int localId = 0;
+
+            synchronized (clientId) {
+                localId = clientId;
+                Pair pair = new Pair(localId);
+                holdBack.put(Protocol.GET_BOOKED_FLIGHT_COUNT, pair);
+                buffer = Protocol.createFrontEndMsg(Protocol.GET_BOOKED_FLIGHT_COUNT, clientId);
+                clientId++;
+            }
 
             out.write(buffer);
             out.flush();
@@ -67,6 +96,36 @@ public class CorbaFrontEnd extends FSInterfacePOA {
 
     @Override
     public int editRecord(String recordId, String fieldName, String newValue) {
+
+        try {
+            ReliableSocket socket = establish();
+
+            OutputStream out = socket.getOutputStream();
+
+            byte[] buffer;
+
+            int localId = 0;
+
+            synchronized (clientId) {
+                localId = clientId;
+                Pair pair = new Pair(localId);
+                holdBack.put(Protocol.EDIT_RECORD, pair);
+                buffer = Protocol.createFrontEndMsg(Protocol.EDIT_RECORD, clientId, recordId, fieldName, newValue);
+                clientId++;
+            }
+
+            out.write(buffer);
+            out.flush();
+            out.close();
+
+            clean(socket);
+
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return 0;
     }
 
@@ -78,7 +137,17 @@ public class CorbaFrontEnd extends FSInterfacePOA {
 
             OutputStream out = socket.getOutputStream();
 
-            byte[] buffer = Protocol.createFrontEndMsg(Protocol.ADD_FLIGHT, destination, date, ec, bus, fir);
+            byte[] buffer;
+
+            int localId = 0;
+
+            synchronized (clientId) {
+                localId = clientId;
+                Pair pair = new Pair(localId);
+                holdBack.put(Protocol.ADD_FLIGHT, pair);
+                buffer = Protocol.createFrontEndMsg(Protocol.ADD_FLIGHT, clientId, destination, date, ec, bus, fir);
+                clientId++;
+            }
 
             out.write(buffer);
             out.flush();
@@ -101,13 +170,25 @@ public class CorbaFrontEnd extends FSInterfacePOA {
 
             OutputStream out = socket.getOutputStream();
 
-            byte[] buffer = Protocol.createFrontEndMsg(Protocol.REMOVE_FLIGHT , recordId);
+            byte[] buffer;
+
+            int localId = 0;
+
+            synchronized (clientId) {
+                localId = clientId;
+                Pair pair = new Pair(localId);
+                holdBack.put(Protocol.REMOVE_FLIGHT, pair);
+                buffer = Protocol.createFrontEndMsg(Protocol.REMOVE_FLIGHT, clientId, recordId);
+                clientId++;
+            }
 
             out.write(buffer);
             out.flush();
             out.close();
 
             clean(socket);
+
+
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -123,7 +204,17 @@ public class CorbaFrontEnd extends FSInterfacePOA {
 
             OutputStream out = socket.getOutputStream();
 
-            byte[] buffer = Protocol.createFrontEndMsg(Protocol.TRANSFER_RESERVATION, clientId, currentCity, otherCity);
+            byte[] buffer;
+
+            int localId = 0;
+
+            synchronized (this.clientId) {
+                localId = this.clientId;
+                Pair pair = new Pair(localId);
+                holdBack.put(Protocol.TRANSFER_RESERVATION, pair);
+                buffer = Protocol.createFrontEndMsg(Protocol.TRANSFER_RESERVATION, this.clientId, clientId, currentCity, otherCity);
+                this.clientId++;
+            }
 
             out.write(buffer);
             out.flush();
@@ -145,6 +236,27 @@ public class CorbaFrontEnd extends FSInterfacePOA {
 
     private void clean(ReliableSocket socket) throws IOException {
         socket.close();
+    }
+
+    private void afterTimeOut(int method, int id) {
+        try {
+            Thread.sleep(Protocol.TIME_OUT);
+
+            Pair pairs = holdBack.get(method);
+
+            ArrayList<String> results = pairs.entry.get(id);
+
+
+
+
+
+
+
+
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {
@@ -179,6 +291,8 @@ public class CorbaFrontEnd extends FSInterfacePOA {
             NameComponent path[] = ncRef.to_name("frontEnd");
             ncRef.rebind(path, href);
 
+            impl.listen();
+
             orb.run();
 
         }
@@ -197,7 +311,7 @@ public class CorbaFrontEnd extends FSInterfacePOA {
             while (true) {
                 ReliableSocket socket = (ReliableSocket)serverSocket.accept();
 
-                new Thread(new Handler()).start();
+                new Thread(new Handler(socket)).start();
             }
 
         } catch (IOException e) {
@@ -208,9 +322,58 @@ public class CorbaFrontEnd extends FSInterfacePOA {
     }
 
     class Handler implements Runnable {
+
+        private ReliableSocket socket;
+
+        public Handler(ReliableSocket socket) {
+            this.socket = socket;
+        }
+
         @Override
         public void run() {
 
+            try {
+                InputStream in = socket.getInputStream();
+                byte[] buffer = new byte[Protocol.MSG_LENGTH];
+
+                int size = in.read(buffer);
+
+                String msg = new String(buffer, 0, size);
+
+                String[] tokenizer = msg.split(",");
+
+                int method = Integer.valueOf(tokenizer[0]);
+
+                int id = Integer.valueOf(tokenizer[1]);
+
+                String res = tokenizer[2];
+
+                synchronized (lock) {
+
+                    Pair msges = holdBack.get(method);
+                    ArrayList<String> s = msges.entry.get(id);
+                    s.add(res);
+                    msges.entry.put(id, s);
+                    holdBack.put(method, msges);
+
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+        }
+    }
+
+    class Pair {
+
+        public ConcurrentHashMap<Integer, ArrayList<String>> entry;
+
+        public Pair(int id) {
+            entry = new ConcurrentHashMap<>();
+            ArrayList<String> msg = new ArrayList<>();
+            entry.put(id , msg);
         }
     }
 }
