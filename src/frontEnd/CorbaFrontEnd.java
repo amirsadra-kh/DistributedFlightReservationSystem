@@ -26,10 +26,11 @@ public class CorbaFrontEnd extends FSInterfacePOA {
     private ConcurrentHashMap<Integer,Pair> holdBack = new ConcurrentHashMap<>();
     private Object lock = new Object();
     private Integer clientId = 0;
+    private int mode = Protocol.HA_MODE;
 
 
     @Override
-    public int bookFlight(String firsName, String lastName, String address, String phone, String destination, String date, String flightClass) {
+    public int bookFlight(String city, String firsName, String lastName, String address, String phone, String destination, String date, String flightClass) {
         try {
 
             ReliableSocket socket = establish();
@@ -40,11 +41,13 @@ public class CorbaFrontEnd extends FSInterfacePOA {
 
             int localId = 0;
 
+            Pair pair;
+
             synchronized (clientId) {
                 localId = clientId;
-                Pair pair = new Pair(localId);
+                pair = new Pair(localId);
                 holdBack.put(Protocol.BOOK_FLIGHT, pair);
-                buffer = Protocol.createFrontEndMsg(Protocol.BOOK_FLIGHT, clientId, firsName, lastName, address, phone, destination, date, flightClass);
+                buffer = Protocol.createFrontEndMsg(findCity(city), Protocol.BOOK_FLIGHT, clientId, firsName, lastName, address, phone, destination, date, flightClass);
                 clientId++;
             }
 
@@ -54,15 +57,20 @@ public class CorbaFrontEnd extends FSInterfacePOA {
             out.close();
 
             clean(socket);
+
+            String r = afterTimeOut(Protocol.BOOK_FLIGHT, localId, pair);
+            if (!r.equals("")) {
+                return Integer.valueOf(r);
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return 0;
+        return -1;
     }
 
     @Override
-    public String getBookedFlightCount() {
+    public String getBookedFlightCount(String city) {
 
         try {
             ReliableSocket socket = establish();
@@ -73,11 +81,13 @@ public class CorbaFrontEnd extends FSInterfacePOA {
 
             int localId = 0;
 
+            Pair pair;
+
             synchronized (clientId) {
                 localId = clientId;
-                Pair pair = new Pair(localId);
+                pair = new Pair(localId);
                 holdBack.put(Protocol.GET_BOOKED_FLIGHT_COUNT, pair);
-                buffer = Protocol.createFrontEndMsg(Protocol.GET_BOOKED_FLIGHT_COUNT, clientId);
+                buffer = Protocol.createFrontEndMsg(findCity(city), Protocol.GET_BOOKED_FLIGHT_COUNT, clientId);
                 clientId++;
             }
 
@@ -86,6 +96,12 @@ public class CorbaFrontEnd extends FSInterfacePOA {
             out.close();
 
             clean(socket);
+
+
+            String r = afterTimeOut(Protocol.GET_BOOKED_FLIGHT_COUNT, localId, pair);
+            if (!r.equals("")) {
+                return r;
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -95,7 +111,7 @@ public class CorbaFrontEnd extends FSInterfacePOA {
     }
 
     @Override
-    public int editRecord(String recordId, String fieldName, String newValue) {
+    public int editRecord(String city, String recordId, String fieldName, String newValue) {
 
         try {
             ReliableSocket socket = establish();
@@ -106,11 +122,13 @@ public class CorbaFrontEnd extends FSInterfacePOA {
 
             int localId = 0;
 
+            Pair pair;
+
             synchronized (clientId) {
                 localId = clientId;
-                Pair pair = new Pair(localId);
+                pair = new Pair(localId);
                 holdBack.put(Protocol.EDIT_RECORD, pair);
-                buffer = Protocol.createFrontEndMsg(Protocol.EDIT_RECORD, clientId, recordId, fieldName, newValue);
+                buffer = Protocol.createFrontEndMsg(findCity(city), Protocol.EDIT_RECORD, clientId, recordId, fieldName, newValue);
                 clientId++;
             }
 
@@ -121,16 +139,21 @@ public class CorbaFrontEnd extends FSInterfacePOA {
             clean(socket);
 
 
+            String r = afterTimeOut(Protocol.EDIT_RECORD, localId, pair);
+            if (!r.equals("")) {
+                return Integer.valueOf(r);
+            }
+
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return 0;
+        return -1;
     }
 
     @Override
-    public int addFlight(String destination, String date, String ec, String bus, String fir) {
+    public int addFlight(String city, String destination, String date, String ec, String bus, String fir) {
 
         try {
             ReliableSocket socket = establish();
@@ -141,11 +164,13 @@ public class CorbaFrontEnd extends FSInterfacePOA {
 
             int localId = 0;
 
+            Pair pair;
+
             synchronized (clientId) {
                 localId = clientId;
-                Pair pair = new Pair(localId);
+                pair = new Pair(localId);
                 holdBack.put(Protocol.ADD_FLIGHT, pair);
-                buffer = Protocol.createFrontEndMsg(Protocol.ADD_FLIGHT, clientId, destination, date, ec, bus, fir);
+                buffer = Protocol.createFrontEndMsg(findCity(city), Protocol.ADD_FLIGHT, clientId, destination, date, ec, bus, fir);
                 clientId++;
             }
 
@@ -155,15 +180,21 @@ public class CorbaFrontEnd extends FSInterfacePOA {
 
             clean(socket);
 
+
+            String r = afterTimeOut(Protocol.ADD_FLIGHT, localId, pair);
+            if (!r.equals("")) {
+                return Integer.valueOf(r);
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return 0;
+        return -1;
     }
 
     @Override
-    public int removeFlight(String recordId) {
+    public int removeFlight(String city, String recordId) {
 
         try {
             ReliableSocket socket = establish();
@@ -173,12 +204,14 @@ public class CorbaFrontEnd extends FSInterfacePOA {
             byte[] buffer;
 
             int localId = 0;
+
+            Pair pair;
 
             synchronized (clientId) {
                 localId = clientId;
-                Pair pair = new Pair(localId);
+                pair = new Pair(localId);
                 holdBack.put(Protocol.REMOVE_FLIGHT, pair);
-                buffer = Protocol.createFrontEndMsg(Protocol.REMOVE_FLIGHT, clientId, recordId);
+                buffer = Protocol.createFrontEndMsg(findCity(city), Protocol.REMOVE_FLIGHT, clientId, recordId);
                 clientId++;
             }
 
@@ -189,16 +222,22 @@ public class CorbaFrontEnd extends FSInterfacePOA {
             clean(socket);
 
 
+            String r = afterTimeOut(Protocol.REMOVE_FLIGHT, localId, pair);
+            if (!r.equals("")) {
+                return Integer.valueOf(r);
+            }
+
+
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return 0;
+        return -1;
     }
 
     @Override
-    public int transferReservation(String clientId, String currentCity, String otherCity) {
+    public int transferReservation(String city, String clientId, String currentCity, String otherCity) {
         try {
             ReliableSocket socket = establish();
 
@@ -207,12 +246,14 @@ public class CorbaFrontEnd extends FSInterfacePOA {
             byte[] buffer;
 
             int localId = 0;
+
+            Pair pair;
 
             synchronized (this.clientId) {
                 localId = this.clientId;
-                Pair pair = new Pair(localId);
+                pair = new Pair(localId);
                 holdBack.put(Protocol.TRANSFER_RESERVATION, pair);
-                buffer = Protocol.createFrontEndMsg(Protocol.TRANSFER_RESERVATION, this.clientId, clientId, currentCity, otherCity);
+                buffer = Protocol.createFrontEndMsg(findCity(city), Protocol.TRANSFER_RESERVATION, this.clientId, clientId, currentCity, otherCity);
                 this.clientId++;
             }
 
@@ -222,15 +263,40 @@ public class CorbaFrontEnd extends FSInterfacePOA {
 
             clean(socket);
 
+
+            String r = afterTimeOut(Protocol.TRANSFER_RESERVATION, localId, pair);
+            if (!r.equals("")) {
+                return Integer.valueOf(r);
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return 0;
+
+        return -1;
+    }
+
+    private int findCity(String city) {
+        int res=0;
+
+        switch (city) {
+            case "MTL":
+                res = Protocol.MTL;
+                break;
+            case "NDL":
+                res = Protocol.NDL;
+                break;
+            case "WA":
+                res = Protocol.WA;
+                break;
+        }
+
+        return res;
     }
 
     private ReliableSocket establish() throws IOException {
         ReliableSocket socket = new ReliableSocket();
-        socket.connect(new InetSocketAddress("127.0.0.1" , 9876));
+        socket.connect(new InetSocketAddress("127.0.0.1" , Protocol.SEQUENCER_PORT));
         return socket;
     }
 
@@ -238,25 +304,54 @@ public class CorbaFrontEnd extends FSInterfacePOA {
         socket.close();
     }
 
-    private void afterTimeOut(int method, int id) {
-        try {
-            Thread.sleep(Protocol.TIME_OUT);
+    private String afterTimeOut(int method, int id, Pair pair) {
 
-            Pair pairs = holdBack.get(method);
+        String f = "";
 
-            ArrayList<String> results = pairs.entry.get(id);
+        if (mode == Protocol.HA_MODE) {
 
+            synchronized (pair) {
+                try {
 
+                    pair.wait();
 
+                    ArrayList<String> results = pair.entry.get(id);
 
+                    int size = results.size();
 
+                    if (size > 0) {
+                        String p = results.get(0);
+                        String[] s = p.split(",");
+                        f = s[0];
+                    }
 
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
 
-
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            ErrorHandler res = new ErrorHandler(pair, id);
+            res.start();
         }
+
+        else {
+            ErrorHandler res = new ErrorHandler(pair, id);
+            res.start();
+
+            try {
+
+                res.join();
+
+                f = res.readResult();
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+
+        }
+
+        return f;
     }
 
     public static void main(String[] args) {
@@ -306,7 +401,7 @@ public class CorbaFrontEnd extends FSInterfacePOA {
     public void listen() {
 
         try {
-            ReliableServerSocket serverSocket = new ReliableServerSocket(9999);
+            ReliableServerSocket serverSocket = new ReliableServerSocket(Protocol.FRONT_END_PORT);
 
             while (true) {
                 ReliableSocket socket = (ReliableSocket)serverSocket.accept();
@@ -342,26 +437,79 @@ public class CorbaFrontEnd extends FSInterfacePOA {
 
                 String[] tokenizer = msg.split(",");
 
-                int method = Integer.valueOf(tokenizer[0]);
+                int replica = Integer.valueOf(tokenizer[0]);
 
-                int id = Integer.valueOf(tokenizer[1]);
+                int method = Integer.valueOf(tokenizer[1]);
 
-                String res = tokenizer[2];
+                int id = Integer.valueOf(tokenizer[2]);
+
+                String res = tokenizer[3] + "," + replica;
+
+                Pair msges = holdBack.get(method);
 
                 synchronized (lock) {
-
-                    Pair msges = holdBack.get(method);
                     ArrayList<String> s = msges.entry.get(id);
                     s.add(res);
                     msges.entry.put(id, s);
                     holdBack.put(method, msges);
+                }
 
+                synchronized (msges) {
+                    msges.notify();
                 }
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
+
+        }
+    }
+
+    class ErrorHandler extends Thread {
+
+        private Pair pair;
+        private int id;
+
+        public ErrorHandler(Pair pair, int id) {
+            this.pair = pair;
+            this.id = id;
+        }
+
+        public String readResult() {
+            return "";
+        }
+
+        @Override
+        public void run() {
+
+            try {
+                Thread.sleep(Protocol.TIME_OUT);
+
+                ArrayList<String> results = pair.entry.get(id);
+
+                int size = results.size();
+
+//                synchronized (results) {
+//
+//                    for (int i = 0; i <) {
+//
+//                    }
+//
+//                }
+
+                if (size > 0) {
+
+                    String p = results.get(0);
+                    String[] s = p.split(",");
+
+                }
+
+
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
         }
     }

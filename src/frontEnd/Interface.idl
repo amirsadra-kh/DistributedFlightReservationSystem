@@ -2,18 +2,18 @@ module shared {
 
     interface FSInterface {
 
-        long bookFlight(in string firsName, in string lastName, in string address,
+        long bookFlight(in string city, in string firsName, in string lastName, in string address,
                               in string phone, in string destination, in string date, in string flightClass);
 
-        string getBookedFlightCount();
+        string getBookedFlightCount(in string city);
 
-        long editRecord(in string recordId, in string fieldName, in string newValue);
+        long editRecord(in string city, in string recordId, in string fieldName, in string newValue);
 
-        long addFlight(in string destination, in string date, in string ec, in string bus, in string fir);
+        long addFlight(in string city, in string destination, in string date, in string ec, in string bus, in string fir);
 
-        long removeFlight(in string recordId);
+        long removeFlight(in string city, in string recordId);
 
-        long transferReservation(in string clientId, in string currentCity, in string otherCity);
+        long transferReservation(in string city, in string clientId, in string currentCity, in string otherCity);
 
     };
 

@@ -19,6 +19,11 @@ abstract public class ParentServant {
         this.cityOrigin = cityOrigin;
     }
 
+    public ParentServant(int cityPort) {
+        this.cityPort = cityPort;
+
+    }
+
     public abstract int bookFlight(String firsName, String lastName, String address, String phone, String destination, String date, String flightClass);
 
     public abstract String getBookedFlightCount();

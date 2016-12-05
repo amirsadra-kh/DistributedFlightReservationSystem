@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 
 /**
  * Created by masseeh on 12/2/16.
@@ -19,7 +20,7 @@ public class Sequencer {
     private void init() {
         try {
 
-            sequencerSocket = new ReliableServerSocket(9876);
+            sequencerSocket = new ReliableServerSocket(Protocol.SEQUENCER_PORT);
             while (true) {
 
                 System.out.println("Waiting...");
@@ -51,6 +52,46 @@ public class Sequencer {
             this.seq = seq;
         }
 
+        public void sendToReplica(int city, byte[] sendBuffer) {
+
+            int[] replicaPorts =  new int[3];
+
+
+            switch (city) {
+                case Protocol.MTL:
+                    replicaPorts[0] = Protocol.FIRST_REPLICA_PORT_MTL;
+                    replicaPorts[1] = Protocol.SECOND_REPLICA_PORT_MTL;
+                    replicaPorts[2] = 1;
+                    break;
+                case Protocol.NDL:
+                    replicaPorts[0] = Protocol.FIRST_REPLICA_PORT_NDL;
+                    replicaPorts[1] = Protocol.SECOND_REPLICA_PORT_NDL;
+                    replicaPorts[2] = 1;
+                    break;
+                case Protocol.WA:
+                    replicaPorts[0] = Protocol.FIRST_REPLICA_PORT_WA;
+                    replicaPorts[1] = Protocol.SECOND_REPLICA_PORT_WA;
+                    replicaPorts[2] = 1;
+                    break;
+            }
+
+            //for(int i=0;i<3;i++){}
+            try {
+                ReliableSocket sendToReplica = new ReliableSocket();
+
+                sendToReplica.connect(new InetSocketAddress("127.0.0.1" , replicaPorts[0]));
+
+                OutputStream out = sendToReplica.getOutputStream();
+                out.write(sendBuffer);
+
+                out.flush();
+                out.close();
+                sendToReplica.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         @Override
         public void run() {
 
@@ -63,20 +104,20 @@ public class Sequencer {
 
                 System.out.println(msg);
 
-                byte[] sendBuffer = Protocol.createSequencerMsg(seq, msg);
+                String[] tokenizer = msg.split(",");
+
+                int city = Integer.valueOf(tokenizer[0]);
+
+                String newMsg = Protocol.mergeMsg(Arrays.copyOfRange(tokenizer, 1, tokenizer.length));
+
+                byte[] sendBuffer = Protocol.createSequencerMsg(seq, newMsg);
 
                 in.close();
                 socket.close();
 
-                ReliableSocket sendToReplica = new ReliableSocket();
-                sendToReplica.connect(new InetSocketAddress("127.0.0.1" , 9987));
+                sendToReplica(city, sendBuffer);
 
-                OutputStream out = sendToReplica.getOutputStream();
-                out.write(sendBuffer);
 
-                out.flush();
-                out.close();
-                sendToReplica.close();
 
             } catch (IOException e) {
                 e.printStackTrace();

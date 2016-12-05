@@ -20,7 +20,7 @@ public class Main {
             NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
 
 
-            for (int i=0;i<2;i++) {
+            for (int i=0;i<1;i++) {
                 final int p = i;
                 new Thread(new Runnable() {
                     @Override
@@ -28,7 +28,7 @@ public class Main {
                         try {
                             System.out.println(p);
                             FSInterface fsInterface = FSInterfaceHelper.narrow(ncRef.resolve_str("frontEnd"));
-                            fsInterface.removeFlight("HIII " + p);
+                            fsInterface.removeFlight("MTL" , "0");
 
                         } catch (NotFound notFound) {
                             notFound.printStackTrace();

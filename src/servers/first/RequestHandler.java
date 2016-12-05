@@ -6,6 +6,8 @@ import net.rudp.ReliableSocket;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -21,7 +23,7 @@ public class RequestHandler {
     private Integer sequenceNumber = 0;
 
 
-    public RequestHandler(FSServant servant) {
+    public RequestHandler(ParentServant servant) {
         this.servant = servant;
         holdBack = new ConcurrentHashMap<>();
 
@@ -85,9 +87,27 @@ public class RequestHandler {
                 break;
         }
 
-        returnResult = Protocol.createResultMsg(method, seq, res);
+        returnResult = Protocol.createResultMsg(ReplicaManager.ID, method, seq, res);
 
         return returnResult;
+    }
+
+    public void sendResult(byte[] buffer) {
+        try {
+            ReliableSocket socket = new ReliableSocket();
+            socket.connect(new InetSocketAddress("127.0.0.1", Protocol.FRONT_END_PORT));
+
+            OutputStream out = socket.getOutputStream();
+
+            out.write(buffer);
+
+            out.flush();
+            out.close();
+            socket.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     class Handler implements Runnable {
@@ -109,6 +129,9 @@ public class RequestHandler {
 
                 int size = in.read(buffer);
 
+                in.close();
+                socket.close();
+
                 String msg = new String(buffer, 0, size);
 
                 System.out.println(msg);
@@ -129,16 +152,15 @@ public class RequestHandler {
                 }
 
                 if (isAllowed) {
-                    invoke(msg);
+                    byte[] bytes = invoke(msg);
+                    sendResult(bytes);
                     while (holdBack.contains(sequenceNumber)) {
                         String s = holdBack.remove(sequenceNumber);
-                        invoke(s);
+                        byte[] b = invoke(s);
+                        sendResult(b);
                         sequenceNumber++;
                     }
                 }
-
-                in.close();
-                socket.close();
 
             } catch (IOException e) {
                 e.printStackTrace();

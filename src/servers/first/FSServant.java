@@ -164,7 +164,7 @@ public class FSServant extends ParentServant{
     }
 
     generalLogger.info(client + " has been added to reservation list");
-    return client.getClientId();
+    return 0;
   }
 
   @Override
@@ -365,7 +365,8 @@ public class FSServant extends ParentServant{
           }
 
           generalLogger.info("flight have been changed from " + currentCity + " to " + otherCity);
-          return 1;
+          return 0;
+
         } else {
 
           return -1;
@@ -375,7 +376,6 @@ public class FSServant extends ParentServant{
       } catch (IOException e) {
         e.printStackTrace();
       }
-
 
       return 0;
     }
@@ -435,7 +435,7 @@ public class FSServant extends ParentServant{
         break;
     }
 
-    FSServant fsServant = new FSServant(ReplicaManager.flightCountPorts.get(args[0]), ReplicaManager.transferPorts.get(trans), 9987, args[0]);
+    FSServant fsServant = new FSServant(ReplicaManager.flightCountPorts.get(args[0]), ReplicaManager.transferPorts.get(trans), Protocol.FIRST_REPLICA_PORT_MTL, args[0]);
 
 //    fsServant.populate(args[0]);
 
@@ -446,7 +446,6 @@ public class FSServant extends ParentServant{
     requestHandler.listen();
 
   }
-
 
   private void populate(String city) {
 
