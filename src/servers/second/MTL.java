@@ -22,10 +22,13 @@ public class MTL extends ParentServant{
     //Flight Map and Passenger Map databases
     static Map<String, ArrayList<String>> flightMap = new HashMap<>();
     static Map<String, Map<String, ArrayList<String>>> mtlPassengerMap = new HashMap<>();
+    private Object lock = new Object();
 
     //Static logging file for the server
     static Path fileAddress = Paths.get("/Users/Sadra/IdeaProjects/DFRS_WEBSERVICES/src/Server Logs/MTL_SERVER_LOG.txt");
+    static Path protPath = Paths.get("/resources/mtl1/actions.log");
     static ArrayList<String> lines = new ArrayList<>();
+    static ArrayList<String> protLines = new ArrayList<>();
 
     //Alphabetic hash maps for Passengers
     static Map<String, ArrayList<String>> mapVal = new HashMap<>();
@@ -133,6 +136,16 @@ public class MTL extends ParentServant{
     //Remote functions implementations
     @WebMethod
     public synchronized String getBookedFlightCount () {
+
+        synchronized (lock){
+            protLines.add(Protocol.createLogMsg(Protocol.GET_BOOKED_FLIGHT_COUNT)+"\n");
+            try {
+                Files.write(protPath, protLines , Charset.forName("UTF-8"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         String serverSentence = "";
         String[] results = new String[2];
 
@@ -217,6 +230,19 @@ public class MTL extends ParentServant{
 
     @WebMethod
     public int transferReservation(String recordID, String currentCity, String otherCity){
+
+        synchronized (lock) {
+            protLines.add(Protocol.createLogMsg(Protocol.TRANSFER_RESERVATION, recordID, currentCity, otherCity)+"\n");
+            try {
+                Files.write(protPath, protLines , Charset.forName("UTF-8"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        Protocol.createLogMsg(Protocol.TRANSFER_RESERVATION, recordID, currentCity, otherCity);
+
         int isDone = -1;
         if (mapVal.containsKey(recordID)) {
             StringBuilder sendData = new StringBuilder();
@@ -311,6 +337,15 @@ public class MTL extends ParentServant{
 
     @WebMethod
     public synchronized int addFlight(String destination, String flightDate, String ECO, String BUS, String FIR){
+        synchronized (lock){
+            protLines.add(Protocol.createLogMsg(Protocol.ADD_FLIGHT, destination, flightDate, ECO, BUS, FIR)+"\n");
+            try {
+                Files.write(protPath, protLines , Charset.forName("UTF-8"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         int result;
         String uniqueID = UUID.randomUUID().toString().substring(0, 5);
         ArrayList<String> flightData = new ArrayList<>();
@@ -345,6 +380,16 @@ public class MTL extends ParentServant{
 
     @WebMethod
     public synchronized int removeFlight(String recordID){
+        synchronized (lock){
+            protLines.add(Protocol.createLogMsg(Protocol.REMOVE_FLIGHT, recordID)+"\n");
+            try {
+                Files.write(protPath, protLines , Charset.forName("UTF-8"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+
         int result = -1;
         flightMap.remove(recordID);
         result = 0;
@@ -364,6 +409,15 @@ public class MTL extends ParentServant{
 
     @WebMethod
     public synchronized int bookFlight (String firstName, String lastName, String address, String phone, String destination, String flightDate, String flightClass){
+
+        synchronized (lock){
+            protLines.add(Protocol.createLogMsg(Protocol.BOOK_FLIGHT, firstName, lastName, address, phone, destination, flightDate, flightClass)+"\n");
+            try {
+                Files.write(protPath, protLines , Charset.forName("UTF-8"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         ArrayList<String> mtlPassengerList = new ArrayList<>();
         String mainKey = lastName.substring(0,1).toUpperCase();
@@ -1133,6 +1187,15 @@ public class MTL extends ParentServant{
 
     @WebMethod
     public int editRecord(String recordID, String fieldName, String newValue){
+        synchronized (lock){
+            protLines.add(Protocol.createLogMsg(Protocol.EDIT_RECORD, recordID, fieldName, newValue)+"\n");
+            try {
+                Files.write(protPath, protLines , Charset.forName("UTF-8"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         ArrayList<String> edit = new ArrayList<>();
         String result = "";
 

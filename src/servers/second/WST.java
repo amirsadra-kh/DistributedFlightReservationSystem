@@ -7,8 +7,6 @@ import frontEnd.Protocol;
 import servers.first.ParentServant;
 
 import javax.jws.WebMethod;
-import javax.jws.WebService;
-import javax.xml.ws.Endpoint;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.*;
@@ -29,6 +27,8 @@ public class WST extends ParentServant {
 
     //Static file assignment for logging
     static Path fileAddress = Paths.get("/Users/Sadra/IdeaProjects/DFRS_WEBSERVICES/src/Server Logs/WST_SERVER_LOG.txt");
+    static Path protPath = Paths.get("/resources/wst1/actions.log");
+    static ArrayList<String> protLines = new ArrayList<>();
     static ArrayList<String> lines = new ArrayList<>();
 
     //Alphabetic hash maps for Passengers
@@ -60,7 +60,7 @@ public class WST extends ParentServant {
     static Map<String, ArrayList<String>> mapValY = new HashMap<>();
     static Map<String, ArrayList<String>> mapValZ = new HashMap<>();
 
-
+    Object lock = new Object();
     static String departure = "WST";
 
     public WST(int cityPort) {
@@ -148,6 +148,16 @@ public class WST extends ParentServant {
     //Remote functions implementations
     @WebMethod
     public synchronized String getBookedFlightCount () {
+
+        synchronized (lock){
+            protLines.add(Protocol.createLogMsg(Protocol.GET_BOOKED_FLIGHT_COUNT)+"\n");
+            try {
+                Files.write(protPath, protLines , Charset.forName("UTF-8"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         String serverSentence = "";
         String[] results = new String[2];
 
@@ -232,6 +242,15 @@ public class WST extends ParentServant {
 
     @WebMethod
     public int transferReservation(String recordID, String currentCity, String otherCity){
+        synchronized (lock){
+            protLines.add(Protocol.createLogMsg(Protocol.TRANSFER_RESERVATION, recordID, currentCity, otherCity)+"\n");
+            try {
+                Files.write(protPath, protLines , Charset.forName("UTF-8"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         int isDone = -1;
         if (mapVal.containsKey(recordID)) {
             StringBuilder sendData = new StringBuilder();
@@ -326,6 +345,15 @@ public class WST extends ParentServant {
 
     @WebMethod
     public synchronized int addFlight(String destination, String flightDate, String ECO, String BUS, String FIR) {
+        synchronized (lock){
+            protLines.add(Protocol.createLogMsg(Protocol.ADD_FLIGHT, destination, flightDate, ECO, BUS, FIR)+"\n");
+            try {
+                Files.write(protPath, protLines , Charset.forName("UTF-8"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         String uniqueID = UUID.randomUUID().toString().substring(0, 5);
         String result;
         ArrayList<String> flightData = new ArrayList<>();
@@ -358,6 +386,15 @@ public class WST extends ParentServant {
 
     @WebMethod
     public synchronized int removeFlight(String recordID) {
+        synchronized (lock){
+            protLines.add(Protocol.createLogMsg(Protocol.REMOVE_FLIGHT, recordID)+"\n");
+            try {
+                Files.write(protPath, protLines , Charset.forName("UTF-8"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         String result;
         flightMap.remove(recordID);
         result = "Flight record [" + recordID + "] has been removed successfully.";
@@ -379,6 +416,15 @@ public class WST extends ParentServant {
 
     @WebMethod
     public synchronized int bookFlight(String firstName, String lastName, String address, String phone, String destination, String flightDate, String flightClass) {
+        synchronized (lock){
+            protLines.add(Protocol.createLogMsg(Protocol.BOOK_FLIGHT, firstName, lastName, address, phone, destination, flightDate, flightClass)+"\n");
+            try {
+                Files.write(protPath, protLines , Charset.forName("UTF-8"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
 
         ArrayList<String> wstPassengerList = new ArrayList<>();
         String mainKey = lastName.substring(0, 1).toUpperCase();
@@ -1145,6 +1191,15 @@ public class WST extends ParentServant {
 
     @WebMethod
     public int editRecord(String recordID, String fieldName, String newValue) {
+        synchronized (lock){
+            protLines.add(Protocol.createLogMsg(Protocol.EDIT_RECORD, recordID, fieldName, newValue)+"\n");
+            try {
+                Files.write(protPath, protLines , Charset.forName("UTF-8"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         ArrayList<String> edit = new ArrayList<>();
         String result = "";
         ArrayList<String> f = flightMap.get(recordID);

@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/DFRS.iml" filepath="$PROJECT_DIR$/DFRS.iml" />
-      <module fileurl="file:///Volumes/Macintosh HD/Users/masseeh/IdeaProjects/DFRS/libs/rudp-1.2.3/rudp-1.2.3.iml" filepath="/Volumes/Macintosh HD/Users/masseeh/IdeaProjects/DFRS/libs/rudp-1.2.3/rudp-1.2.3.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libs/rudp-1.2.3/rudp-1.2.3.iml" filepath="$PROJECT_DIR$/libs/rudp-1.2.3/rudp-1.2.3.iml" />
     </modules>
   </component>
 </project>
